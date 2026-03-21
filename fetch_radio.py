@@ -32,7 +32,7 @@ def get_dynamic_base_urls():
 # 2. Vòng lặp "Thử vận may" qua list URL
 def fetch_and_process_stations(list_base_url, country_code=""):
     params = {
-        "limit": 200 if country_code else 300,
+        "limit": 2000 if country_code else 3000,
         "hidebroken": "true",
         "order": "votes",
         "reverse": "true",
@@ -67,7 +67,7 @@ def fetch_and_process_stations(list_base_url, country_code=""):
                             "favicon": dto.get("favicon", "")
                         })
                         
-                    if len(mapped_list) >= 100:
+                    if len(mapped_list) >= 150:
                         break
                 
                 print(f"✅ Lấy data THÀNH CÔNG từ server: {base_url}")
