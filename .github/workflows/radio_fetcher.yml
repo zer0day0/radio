@@ -1,1 +1,62 @@
+name: Radio Data Fetcher
 
+on:
+  schedule:
+    - cron: '0 0,12 * * *' # Chạy tự động vào 0h và 12h (UTC) mỗi ngày
+  workflow_dispatch: # Nút bấm chạy bằng tay trên GitHub để test
+
+jobs:
+  fetch-and-cache:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Cấp quyền để Action có thể Push code lên Repo
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: pip install requests
+
+      - name: Run Radio Fetcher Script
+        run: python fetch_radio.py
+
+      - name: Commit and Push Changes
+        id: commit_step
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/radio/*.json
+          
+          # Kiểm tra xem có sự thay đổi file nào không
+          if git diff --staged --quiet; then
+            echo "⚠️ Không có dữ liệu Radio nào mới hoặc thay đổi. Bỏ qua commit."
+            echo "has_changes=false" >> $GITHUB_ENV
+          else
+            git commit -m "Auto-update Radio Stations"
+            git push
+            echo "✅ Đã Push dữ liệu mới lên GitHub."
+            echo "has_changes=true" >> $GITHUB_ENV
+          fi
+
+      - name: Purge jsDelivr Cache
+        # CHỈ chạy bước này nếu bước trên có Push code mới (has_changes == true)
+        if: env.has_changes == 'true'
+        run: |
+          echo "Bắt đầu xóa cache jsDelivr cho các file Radio..."
+          
+          # GITHUB_REPOSITORY tự động lấy tên 'username/repo' của bác
+          # GITHUB_REF_NAME tự động lấy tên nhánh (ví dụ: 'main' hoặc 'master')
+          
+          for file in data/radio/*.json; do
+            echo "Đang Purge cache cho: $file"
+            # Gọi API Purge của jsDelivr
+            curl -s "https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@${GITHUB_REF_NAME}/${file}"
+          done
+          
+          echo "🎉 Đã xóa cache jsDelivr thành công! App sẽ nhận data mới ngay lập tức."
