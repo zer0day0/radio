@@ -67,7 +67,7 @@ def fetch_and_process_stations(list_base_url, country_code=""):
                             "favicon": dto.get("favicon", "")
                         })
                         
-                    if len(mapped_list) >= 150:
+                    if len(mapped_list) >= 200:
                         break
                 
                 print(f"✅ Lấy data THÀNH CÔNG từ server: {base_url}")
