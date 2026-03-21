@@ -106,19 +106,30 @@ def run_fetcher():
 
     # Lấy dữ liệu cho Từng quốc gia
     for code in valid_countries:
-        # Truyền cả list_base_url vào để nó tự xử lý fallback
         stations = fetch_and_process_stations(list_base_url, code)
-        if stations:
+        
+        # LOGIC CHUẨN: Trong Python, nếu mảng 'stations' rỗng [], nó sẽ tự động tính là False.
+        # Nếu mảng có ít nhất 1 phần tử, nó sẽ là True.
+        if stations: 
             with open(f'data/radio/{code}.json', 'w', encoding='utf-8') as f:
                 json.dump(stations, f, ensure_ascii=False)
-            print(f"Đã lưu {code.upper()}")
+            print(f"✅ Đã cập nhật data cho {code.upper()} ({len(stations)} đài)")
+        else:
+            # API trả về [] hoặc bị Exception nên trả về rỗng -> Không ghi đè
+            print(f"⚠️ API trả về rỗng cho {code.upper()}. GIỮ NGUYÊN FILE CŨ!")
+            
         time.sleep(0.2)
 
     # Lấy danh sách Global Fallback
     global_stations = fetch_and_process_stations(list_base_url, "")
-    with open(f'data/radio/global.json', 'w', encoding='utf-8') as f:
-        json.dump(global_stations, f, ensure_ascii=False)
-    print("✅ Đã lưu Global Fallback")
+    
+    # Tương tự cho bản Global, chỉ cần có đài là lụm
+    if global_stations: 
+        with open(f'data/radio/global.json', 'w', encoding='utf-8') as f:
+            json.dump(global_stations, f, ensure_ascii=False)
+        print(f"✅ Đã cập nhật Global Fallback ({len(global_stations)} đài)")
+    else:
+        print("⚠️ API trả về rỗng cho Global. GIỮ NGUYÊN FILE CŨ!")
 
 if __name__ == "__main__":
     run_fetcher()
